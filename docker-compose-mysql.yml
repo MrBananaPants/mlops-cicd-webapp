@@ -1,0 +1,48 @@
+services:
+  webapp:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/app/src
+      - ./database:/app/database
+    environment:
+      - NODE_ENV=development
+      - MYSQL_URL=mysql://root:password@database:3306/my_database
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "3000"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  database:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: my_database
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: unless-stopped
+
+  test:
+    build: .
+    environment:
+      - API_URL=http://webapp:3000
+    depends_on:
+      webapp:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+    command: ["yarn", "test"]
+
+volumes:
+  db_data:

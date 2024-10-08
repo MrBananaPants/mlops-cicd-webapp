@@ -1,0 +1,14 @@
+services:
+  webapp:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/app/src
+      - ./database:/app/database
+    environment:
+      - NODE_ENV=development
+    restart: unless-stopped
+
+volumes:
+  database:
